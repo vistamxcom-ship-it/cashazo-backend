@@ -162,7 +162,7 @@ app.get('/health', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log('════════════════════════════════════════════════════════════');
-  console.log(`🌐 Backend CASHAZO en http://localhost:${PORT}`);
+  console.log(`🌐 Backend CASHAZO escuchando en puerto ${PORT}`);
   console.log('════════════════════════════════════════════════════════════');
   console.log(`✅ Supabase: Conectado`);
   console.log('════════════════════════════════════════════════════════════');
