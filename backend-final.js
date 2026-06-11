@@ -31,10 +31,19 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   }
 });
 
-// Middleware
-app.use(cors());
+// Middleware - CORS configurado explícitamente
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false
+}));
+
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+// Manejar preflight requests
+app.options('*', cors());
 
 // Multer para archivos
 const upload = multer({
