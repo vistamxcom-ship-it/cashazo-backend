@@ -1,21 +1,14 @@
 {
   "name": "cashazo-backend-final",
   "version": "1.0.0",
-  "description": "Backend Cashazo - Supabase + Email + File Storage",
+  "description": "Backend Cashazo - Supabase + Email",
   "main": "backend-final.js",
   "scripts": {
     "start": "node backend-final.js",
-    "dev": "nodemon backend-final.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon backend-final.js"
   },
-  "keywords": [
-    "cashazo",
-    "credito",
-    "supabase",
-    "backend",
-    "nodejs"
-  ],
-  "author": "Cashazo Team",
+  "keywords": ["cashazo"],
+  "author": "",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
@@ -29,15 +22,6 @@
     "nodemon": "^2.0.20"
   },
   "engines": {
-    "node": "18.x",
-    "npm": ">=9.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/tu-usuario/cashazo-backend.git"
-  },
-  "bugs": {
-    "url": "https://github.com/tu-usuario/cashazo-backend/issues"
-  },
-  "homepage": "https://github.com/tu-usuario/cashazo-backend#readme"
+    "node": "18.x"
+  }
 }
