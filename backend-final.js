@@ -2,15 +2,26 @@
  * CASHAZO - BACKEND NOTIFICACIONES + ALMACENAMIENTO
  * Recibe solicitudes, guarda en Supabase, notifica por email
  * 
- * npm install express cors multer supabase nodemailer dotenv
+ * npm install express cors multer supabase nodemailer dotenv ws
  * node backend-final.js
  */
 
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
+
+// ✅ IMPORTANTE: Importar ws ANTES de Supabase (si Node.js < 20)
+let supabaseOptions = {};
+const nodeVersion = parseInt(process.versions.node.split('.')[0]);
+if (nodeVersion < 20) {
+  const ws = require('ws');
+  supabaseOptions.realtime = {
+    transport: ws
+  };
+}
+
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -24,7 +35,7 @@ const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_PASS = process.env.GMAIL_PASS;
 
 // Inicializar Supabase
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, supabaseOptions);
 
 // Middleware
 app.use(cors());
@@ -165,6 +176,7 @@ app.get('/health', (req, res) => {
 app.listen(PORT, () => {
   console.log('════════════════════════════════════════════════════════════');
   console.log(`🌐 Backend CASHAZO en http://localhost:${PORT}`);
+  console.log(`📦 Node.js: ${process.versions.node}`);
   console.log('════════════════════════════════════════════════════════════');
   console.log(`✅ Supabase: Conectado`);
   console.log('════════════════════════════════════════════════════════════');
