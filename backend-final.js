@@ -12,6 +12,7 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
+const ws = require('ws');
 require('dotenv').config();
 
 const app = express();
@@ -33,8 +34,14 @@ console.log(`✅ SUPABASE_URL: ${SUPABASE_URL ? '✓ Configurado' : '❌ NO CONF
 console.log(`✅ SUPABASE_KEY: ${SUPABASE_KEY ? '✓ Configurado' : '❌ NO CONFIGURADO'}`);
 console.log(`✅ GMAIL: ${GMAIL_USER ? '✓ Configurado' : '⚠️ No configurado (opcional)'}`);
 
-// Inicializar Supabase
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+// Inicializar Supabase (con soporte WebSocket para Node.js 18)
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  }
+});
 
 // Middleware
 app.use(cors({
