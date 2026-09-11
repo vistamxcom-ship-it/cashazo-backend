@@ -1,6 +1,3 @@
-# Render Deployment Configuration
-# Subir esto a la raíz del repositorio en GitHub para auto-deployment
-
 services:
   - type: web
     name: cashazo-backend
@@ -8,32 +5,13 @@ services:
     region: oregon
     plan: free
     
-    buildCommand: npm install
+    buildCommand: bash render-build.sh
     startCommand: npm start
     
-    # Auto-redeploy cuando empujes a main
     branches:
       - branch: main
         autoPublish: true
     
-    # Variables de entorno
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 3002
-      - key: SUPABASE_URL
-        scope: build
-      - key: SUPABASE_KEY
-        scope: build
-    
-    # Health check
     healthCheckPath: /health
     healthCheckInterval: 30
     healthCheckTimeout: 10
-    
-    # Timeout y limite de memoria
-    maxShutdownDelay: 30
-    
-    # Auto-deploy desde GitHub
-    repo: https://github.com/tu-usuario/cashazo-backend
