@@ -268,7 +268,7 @@ app.listen(PORT, () => {
   console.log('════════════════════════════════════════════════════════════');
   console.log(`\n🌐 Local:   http://localhost:${PORT}`);
   console.log(`🌐 Online:  https://cashazo-backend-v1vr.onrender.com`);
-  console.log('\n📋 ENDPOINTS:`);
+  console.log('\n📋 ENDPOINTS:');
   console.log(`   POST   /api/solicitud           → Recibir solicitud + documentos`);
   console.log(`   GET    /api/solicitud/:folio    → Obtener solicitud específica`);
   console.log(`   GET    /api/solicitudes         → Listar últimas solicitudes`);
