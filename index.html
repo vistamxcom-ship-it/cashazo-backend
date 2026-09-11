@@ -441,7 +441,7 @@ video{width:100%;height:100%;object-fit:cover}
 
     <div class="btn-row">
       <button class="btn btn-back" onclick="prevStep()">← Atrás</button>
-      <button class="btn btn-next" id="btn4Next" disabled onclick="nextStep(4)">Continuar →</button>
+      <button class="btn btn-next" id="btn4Next" onclick="nextStep(4)">Continuar →</button>
     </div>
   </div>
 
@@ -685,7 +685,7 @@ video{width:100%;height:100%;object-fit:cover}
 // ═══════════════════════════════════════
 // VARIABLES GLOBALES
 // ═══════════════════════════════════════
-const API_URL = 'https://cashazo-backend-v1vr.onrender.com/api/solicitud';
+const API_URL = 'https://cashazo-backend-v1vr.onrender.com/api/solicitud'; // ✅ API de Render configurado
 const TOTAL_STEPS = 7;
 const WA_ADMIN = '6141234567'; // Reemplazar con tu número
 let currentStep = 1;
@@ -718,20 +718,28 @@ renderProgressBar();
 // NAVEGACIÓN
 // ═══════════════════════════════════════
 function nextStep(step) {
+  saveFormProgress(); // GUARDAR ANTES de validar
   if (!validate(step)) return;
   goToStep(step + 1);
 }
 
 function prevStep() {
+  saveFormProgress(); // GUARDAR al ir atrás también
   if (currentStep > 1) goToStep(currentStep - 1);
 }
 
 function goToStep(n) {
+  saveFormProgress(); // Guardar ANTES de cambiar
+  
   const current = document.getElementById(currentStep === TOTAL_STEPS + 1 ? 'stepSuccess' : 'step' + currentStep);
   if (current) current.classList.remove('active');
   currentStep = n;
   const next = document.getElementById(n === TOTAL_STEPS + 1 ? 'stepSuccess' : 'step' + n);
   if (next) next.classList.add('active');
+  
+  // Restaurar datos guardados
+  restoreFormProgress();
+  
   renderProgressBar();
   window.scrollTo(0, 0);
   if (n === 2) document.getElementById('waDisplay').value = document.getElementById('whatsapp').value;
@@ -742,6 +750,9 @@ function goToStep(n) {
 // VALIDACIÓN
 // ═══════════════════════════════════════
 function validate(step) {
+  // Si ya pasó este paso y está retrocediendo, permitir
+  if (step < currentStep) return true;
+  
   const val = id => document.getElementById(id).value.trim();
   const numOnly = s => s.replace(/\D/g, '');
 
@@ -769,11 +780,10 @@ function validate(step) {
   }
 
   if (step === 4) {
-    if (!document.getElementById('ineF').files.length) return showErr(4, 'Sube la foto del frente de tu INE');
-    if (!document.getElementById('ineR').files.length) return showErr(4, 'Sube la foto del reverso de tu INE');
-    if (!document.getElementById('recServ').files.length) return showErr(4, 'Sube un recibo de servicio (CFE, Telmex o agua)');
-    if (!document.getElementById('social').files.length) return showErr(4, 'Sube captura de tu perfil en redes sociales');
-    if (!document.getElementById('casa').files.length) return showErr(4, 'Sube foto de tu domicilio');
+    // Si ya pasó este paso, no re-validar
+    if (currentStep > 4) return true;
+    const tieneAlgo = ['ineF','ineR','recServ','social','casa'].some(id => document.getElementById(id).files.length);
+    if (!tieneAlgo) return showErr(4, 'Sube al menos un documento para continuar');
     return true;
   }
 
@@ -1010,8 +1020,7 @@ function uploadDoc(input, type) {
 }
 
 function checkDocs() {
-  const all = ['ineF','ineR','recServ','social','casa'].every(id => document.getElementById(id).files.length);
-  document.getElementById('btn4Next').disabled = !all;
+  // Removed - No longer blocking progress
 }
 
 // ═══════════════════════════════════════
@@ -1092,7 +1101,11 @@ function restoreFormProgress() {
 }
 
 // Restaurar al cargar página
-window.addEventListener('load', restoreFormProgress);
+window.addEventListener('load', () => {
+  restoreFormProgress();
+  // Guardar progreso cada 5 segundos
+  setInterval(saveFormProgress, 5000);
+});
 
 // ═══════════════════════════════════════
 // MONTO
@@ -1189,6 +1202,9 @@ function retryVideo() {
 // ═══════════════════════════════════════
 function submitForm() {
   if (!validate(7)) return;
+  
+  // GUARDAR TODO ANTES DE INTENTAR ENVIAR
+  saveFormProgress();
 
   const folio = 'CZ-' + Math.random().toString(36).substr(2, 8).toUpperCase();
   const wa = document.getElementById('whatsapp').value.replace(/\D/g, '');
@@ -1196,7 +1212,7 @@ function submitForm() {
   const monto = selectedAmount === 'otro' ? document.getElementById('customAmount').value : selectedAmount;
   const montoFmt = '$' + parseInt(monto).toLocaleString('es-MX') + ' MXN';
   const destino = document.getElementById('destino').value;
-  const domicilioUsuario = document.getElementById('domicilio').value;  // LA DIRECCIÓN CORRECTA QUE EL USUARIO ESCRIBA
+  const domicilioUsuario = document.getElementById('domicilio').value;
   const ahora = new Date().toLocaleString('es-MX', { timeZone: 'America/Chihuahua', day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
 
   // SOLICITUD JSON COMPLETA
@@ -1263,15 +1279,13 @@ function submitForm() {
   document.getElementById('reciboDestino').textContent = destino;
   document.getElementById('reciboFecha').textContent = ahora;
 
-  // GUARDAR EN VARIABLE GLOBAL PARA TU ADMIN/SERVIDOR
+  // GUARDAR JSON COMPLETO EN VARIABLE GLOBAL
   window.currentJSON = JSON.stringify(dataSolicitud, null, 2);
 
-  // ENVIAR AL SERVIDOR FINAL
   const formData = new FormData();
   formData.append('dataSolicitud', JSON.stringify(dataSolicitud));
   formData.append('folio', folio);
 
-  // Agregar archivos
   const archivos = [
     { id: 'ineF', name: 'ine_frente' },
     { id: 'ineR', name: 'ine_reverso' },
@@ -1291,7 +1305,7 @@ function submitForm() {
     formData.append('video_verificacion', videoData, 'video.webm');
   }
 
-  // Función de envío SIMPLE
+  // Función de envío CON RETRY
   async function enviar() {
     try {
       console.log('📤 Enviando solicitud...');
@@ -1303,20 +1317,24 @@ function submitForm() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(`HTTP ${response.status} - ${response.statusText}`);
       }
 
       const data = await response.json();
       
       if (data.success) {
         console.log('✅ Éxito:', data.folio);
+        // LIMPIAR SOLO SI FUE EXITOSO
+        localStorage.removeItem('cashazo_progress');
         goToStep(TOTAL_STEPS + 1);
       } else {
-        throw new Error(data.error || 'Error desconocido');
+        throw new Error(data.error || 'Error desconocido en servidor');
       }
     } catch (error) {
       console.error('❌ Error:', error.message);
-      alert('Error: ' + error.message);
+      // NO CAMBIAR DE PASO - Quedarse donde está
+      alert('⚠️ Error al enviar: ' + error.message + '\n\nTus datos están guardados. Intenta de nuevo.');
+      saveFormProgress(); // Guardar para que no pierda nada
     }
   }
 
