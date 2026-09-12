@@ -10,11 +10,11 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
+const ws = require('ws');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3002;
-const HOST = process.env.HOST || '0.0.0.0';
 
 // ═══════════════════════════════════════════════════════════
 // VARIABLES DE ENTORNO (.env)
@@ -24,13 +24,11 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_PASS = process.env.GMAIL_PASS;
 
-// Inicializar Supabase SIN Realtime (evita error WebSocket en Node.js 20)
+// Inicializar Supabase
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   realtime: {
-    params: {
-      eventsPerSecond: 10,
-    },
-  },
+    transport: ws
+  }
 });
 
 // Middleware
@@ -166,16 +164,16 @@ app.get('/health', (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// INICIAR - BIND a 0.0.0.0 para que Render pueda conectarse
+// INICIAR
 // ═══════════════════════════════════════════════════════════
 
-app.listen(PORT, HOST, () => {
+app.listen(PORT, () => {
   console.log('════════════════════════════════════════════════════════════');
-  console.log(`🌐 Backend CASHAZO escuchando en ${HOST}:${PORT}`);
+  console.log(`🌐 Backend CASHAZO en http://localhost:${PORT}`);
   console.log('════════════════════════════════════════════════════════════');
-  console.log(`✅ Supabase: Conectado (SIN Realtime WebSocket)`);
+  console.log(`✅ Supabase: Conectado`);
   console.log('════════════════════════════════════════════════════════════');
-  console.log(`📝 ENDPOINTS:`);
+  console.log(`📝 ENDPOINT:`);
   console.log(`   POST /api/solicitud → Recibir solicitud + documentos`);
   console.log(`   GET  /health        → Estado`);
   console.log('════════════════════════════════════════════════════════════');
