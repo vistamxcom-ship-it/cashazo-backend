@@ -685,7 +685,6 @@ video{width:100%;height:100%;object-fit:cover}
 // ═══════════════════════════════════════
 // VARIABLES GLOBALES
 // ═══════════════════════════════════════
-const API_URL = 'https://cashazo-backend-v1vr.onrender.com/api/solicitud';
 const TOTAL_STEPS = 7;
 const WA_ADMIN = '6141234567'; // Reemplazar con tu número
 let currentStep = 1;
@@ -1202,52 +1201,19 @@ function submitForm() {
     formData.append('video_verificacion', videoData, 'video.webm');
   }
 
-  // Función con reintentos automáticos
-  async function enviarSolicitudConReintentos() {
-    const maxIntentos = 5;
-    const delayMs = 2000; // 2 segundos entre reintentos
-    
-    for (let intento = 1; intento <= maxIntentos; intento++) {
-      try {
-        console.log(`📤 Intento ${intento}/${maxIntentos} enviando solicitud...`);
-        
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          body: formData,
-          signal: AbortSignal.timeout(30000) // Timeout de 30 segundos
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          console.log('✅ Solicitud guardada en Supabase:', data.folio);
-          goToStep(TOTAL_STEPS + 1);
-          return;
-        } else {
-          throw new Error(data.error || 'Error desconocido del servidor');
-        }
-      } catch (error) {
-        console.error(`❌ Intento ${intento} falló:`, error.message);
-        
-        if (intento === maxIntentos) {
-          // Último intento fallido
-          console.error('❌ Falló después de 5 intentos');
-          alert('Error al guardar la solicitud después de varios intentos. Por favor intente nuevamente.');
-        } else {
-          // Esperar antes del siguiente intento
-          console.log(`⏳ Esperando ${delayMs/1000}s antes del intento ${intento + 1}...`);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
-      }
+  fetch('https://cashazo-backend-0wra.onrender.com/api/solicitud', {
+    method: 'POST',
+    body: formData
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      console.log('✅ Solicitud guardada + Email enviado:', data.folio);
     }
-  }
-  
-  // Llamar la función
-  enviarSolicitudConReintentos();
+  })
+  .catch(e => console.log('⚠️ Error:', e));
+
+  goToStep(TOTAL_STEPS + 1);
 }
 
 function updateAceptacion() {
