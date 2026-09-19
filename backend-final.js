@@ -1,13 +1,9 @@
 /**
- * ════════════════════════════════════════════════════════════
  * CASHAZO - BACKEND NOTIFICACIONES + ALMACENAMIENTO
- * ════════════════════════════════════════════════════════════
+ * Recibe solicitudes, guarda en Supabase, notifica por email
  * 
- * VERSIÓN ARREGLADA PARA NODE 20
- * - Sin Realtime (causa error con WebSocket en Node 20)
- * - Solo Database + Storage
- * 
- * ════════════════════════════════════════════════════════════
+ * npm install express cors multer supabase nodemailer dotenv
+ * node backend-final.js
  */
 
 const express = require('express');
@@ -16,20 +12,18 @@ const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
-// ═══════════════════════════════════════════════════════════
-// VARIABLES DE ENTORNO
-// ═══════════════════════════════════════════════════════════
-
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ocietbqwmhvaxgpggifb.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jaWV0YnF3bWh2YXhncGdnaWZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1NDgwNjAsImV4cCI6MjEwNTEyNDA2MH0.pwl-uFBnTyRsfx9JVEQvYyZAsGcN_t3XeO2uhoXz7hM';
-const GMAIL_USER = process.env.GMAIL_USER || '';
-const GMAIL_PASS = process.env.GMAIL_PASS || '';
+const app = express();
 const PORT = process.env.PORT || 3002;
 
 // ═══════════════════════════════════════════════════════════
-// INICIALIZAR SUPABASE (sin Realtime para evitar error WebSocket)
+// VARIABLES DE ENTORNO (.env)
 // ═══════════════════════════════════════════════════════════
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_PASS = process.env.GMAIL_PASS;
 
+// Inicializar Supabase - SIN REALTIME (para Node 20)
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   realtime: {
     params: {
@@ -38,69 +32,50 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   }
 });
 
-console.log('🔧 Inicializando Supabase...');
-console.log(`   URL: ${SUPABASE_URL.substring(0, 30)}...`);
-
-// ═══════════════════════════════════════════════════════════
-// EXPRESS SETUP
-// ═══════════════════════════════════════════════════════════
-
-const app = express();
-
+// Middleware
 app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// ═══════════════════════════════════════════════════════════
-// MULTER (upload de archivos)
-// ═══════════════════════════════════════════════════════════
-
+// Multer para archivos
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 }
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB
 });
 
 // ═══════════════════════════════════════════════════════════
-// KEEP-ALIVE (para Render)
+// KEEP-ALIVE: Auto-ping para mantener el servidor despierto
 // ═══════════════════════════════════════════════════════════
-
 setInterval(() => {
-  fetch(`http://localhost:${PORT}/health`)
-    .then(() => console.log('💚 Keep-alive ping'))
-    .catch(() => {});
-}, 5 * 60 * 1000);
+  fetch(`http://localhost:${PORT}/health`).catch(() => {});
+}, 5 * 60 * 1000); // Cada 5 minutos
 
 // ═══════════════════════════════════════════════════════════
-// ENDPOINT: POST /api/solicitud
+// ENDPOINT PRINCIPAL
 // ═══════════════════════════════════════════════════════════
 
 app.post('/api/solicitud', upload.any(), async (req, res) => {
   try {
-    console.log(`\n📥 NUEVA SOLICITUD`);
-    console.log(`════════════════════════════════════════════════════════════`);
-    
-    console.log(`   📊 Archivos: ${req.files ? req.files.length : 0}`);
-    console.log(`   📋 Campos: ${Object.keys(req.body).join(', ')}`);
+    console.log(`\n📥 Solicitud recibida`);
+    console.log(`   Files: ${req.files ? req.files.length : 0}`);
+    console.log(`   Body keys: ${Object.keys(req.body).join(', ')}`);
     
     if (req.files && req.files.length > 0) {
       req.files.forEach(f => {
-        console.log(`      📄 ${f.fieldname}: ${f.originalname} (${(f.size / 1024).toFixed(2)}KB)`);
+        console.log(`   📄 ${f.fieldname}: ${f.originalname} (${f.size} bytes)`);
       });
     }
 
-    // Generar folio
     const folio = req.body.folio || 'CZ-' + Date.now();
-    console.log(`   🏷️  Folio: ${folio}`);
-
-    // Parsear datos
     let solicitudData;
+
     try {
       solicitudData = JSON.parse(req.body.dataSolicitud || req.body.data || '{}');
-    } catch (e) {
+    } catch {
       solicitudData = req.body;
     }
 
-    // Armar objeto de solicitud
+    // Estructura de solicitud
     const solicitud = {
       folio: folio,
       timestamp: new Date().toISOString(),
@@ -113,91 +88,66 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
       estado: 'nueva'
     };
 
-    console.log(`   ✅ Datos de solicitud armados`);
-
-    // ─────────────────────────────────────────────────────
-    // SUBIR ARCHIVOS A SUPABASE STORAGE
-    // ─────────────────────────────────────────────────────
-
+    // Procesar y subir documentos a Supabase Storage
     if (req.files && req.files.length > 0) {
-      console.log(`\n   📤 Subiendo ${req.files.length} archivo(s)...`);
-
       for (const file of req.files) {
         try {
-          const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.'));
-          const fileName = `${folio}/${file.fieldname}-${Date.now()}${fileExtension}`;
+          const fileName = `${folio}/${file.fieldname}-${Date.now()}${file.originalname.substring(file.originalname.lastIndexOf('.'))}`;
           
-          console.log(`      ⬆️  Subiendo: ${fileName}`);
+          console.log(`   ⬆️ Subiendo: ${fileName}`);
           
-          // SUBIR A STORAGE
-          const { data: uploadData, error: uploadError } = await supabase.storage
+          // Subir a Supabase Storage
+          const { data, error } = await supabase.storage
             .from('Cashazo Documento')
             .upload(fileName, file.buffer, {
               contentType: file.mimetype
             });
 
-          if (uploadError) {
-            console.error(`      ❌ Error: ${uploadError.message}`);
-            continue;
+          if (error) {
+            console.error(`   ❌ Error subiendo ${file.fieldname}:`, error.message);
+          } else {
+            console.log(`   ✅ Subido: ${file.fieldname}`);
+            // Obtener URL con firma (privada, válida 1 hora)
+            const { data: signedUrl } = await supabase.storage
+              .from('Cashazo Documento')
+              .createSignedUrl(fileName, 3600); // 3600 segundos = 1 hora
+
+            solicitud.documentos[file.fieldname] = {
+              filename: file.originalname,
+              url: signedUrl.signedUrl,
+              size: file.size,
+              type: file.mimetype,
+              expira_en: '1 hora'
+            };
           }
-
-          console.log(`      ✅ Subido`);
-
-          // GENERAR URL FIRMADA
-          const { data: signedUrlData } = await supabase.storage
-            .from('Cashazo Documento')
-            .createSignedUrl(fileName, 3600);
-
-          solicitud.documentos[file.fieldname] = {
-            filename: file.originalname,
-            url: signedUrlData.signedUrl,
-            size: file.size,
-            type: file.mimetype,
-            expira_en: '1 hora'
-          };
-
-          console.log(`      📎 Guardado en solicitud`);
-
         } catch (e) {
-          console.error(`      ❌ Error procesando ${file.fieldname}: ${e.message}`);
+          console.error(`   ❌ Error procesando ${file.fieldname}:`, e.message);
         }
       }
     }
 
-    console.log(`   ✅ ${Object.keys(solicitud.documentos).length} archivo(s) procesado(s)`);
-
-    // ─────────────────────────────────────────────────────
-    // GUARDAR EN SUPABASE DATABASE
-    // ─────────────────────────────────────────────────────
-
-    console.log(`\n   💾 Guardando en Database...`);
-
-    const { data: dbData, error: dbError } = await supabase
+    // Guardar en tabla de Supabase
+    const { data, error } = await supabase
       .from('solicitudes')
       .insert([solicitud]);
 
-    if (dbError) {
-      console.error(`      ❌ Error Supabase: ${dbError.message}`);
-      return res.status(500).json({ 
-        error: `Error guardando en BD: ${dbError.message}` 
-      });
+    if (error) {
+      console.error('Error Supabase:', error);
+      return res.status(500).json({ error: error.message });
     }
 
-    console.log(`      ✅ Solicitud guardada`);
-
-    console.log(`\n✅ SOLICITUD COMPLETADA`);
-    console.log(`════════════════════════════════════════════════════════════\n`);
+    console.log(`✅ Solicitud ${folio} guardada en Supabase`);
+    console.log(`📁 Documentos: ${Object.keys(solicitud.documentos).length}`);
 
     res.json({
       success: true,
       mensaje: 'Solicitud guardada en Supabase',
       folio: folio,
-      documentosGuardados: Object.keys(solicitud.documentos).length,
-      timestamp: solicitud.timestamp
+      documentosGuardados: Object.keys(solicitud.documentos).length
     });
 
   } catch (error) {
-    console.error('❌ ERROR:', error.message);
+    console.error('❌ Error:', error.message);
     res.status(500).json({
       success: false,
       error: error.message
@@ -205,31 +155,27 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════
-// ENDPOINT: GET /health
-// ═══════════════════════════════════════════════════════════
-
+// Health check (IMPORTANTE: Render lo usa para saber si está vivo)
 app.get('/health', (req, res) => {
   res.json({ 
-    status: 'ok',
+    status: 'ok', 
     timestamp: new Date().toISOString(),
-    supabase: SUPABASE_URL ? '✅ Conectado' : '❌ No configurado'
+    supabase: SUPABASE_URL ? '✅' : '❌'
   });
 });
 
 // ═══════════════════════════════════════════════════════════
-// INICIAR SERVIDOR
+// INICIAR
 // ═══════════════════════════════════════════════════════════
 
 app.listen(PORT, () => {
-  console.log('\n════════════════════════════════════════════════════════════');
-  console.log(`🚀 CASHAZO BACKEND EN LÍNEA`);
   console.log('════════════════════════════════════════════════════════════');
-  console.log(`🌐 URL: http://localhost:${PORT}`);
-  console.log(`📊 Supabase: ${SUPABASE_URL.substring(0, 40)}...`);
+  console.log(`🌐 Backend CASHAZO en http://localhost:${PORT}`);
   console.log('════════════════════════════════════════════════════════════');
-  console.log(`📝 ENDPOINTS:`);
+  console.log(`✅ Supabase: Conectado`);
+  console.log('════════════════════════════════════════════════════════════');
+  console.log(`📝 ENDPOINT:`);
   console.log(`   POST /api/solicitud → Recibir solicitud + documentos`);
-  console.log(`   GET  /health        → Estado del servidor`);
-  console.log('════════════════════════════════════════════════════════════\n');
+  console.log(`   GET  /health        → Estado`);
+  console.log('════════════════════════════════════════════════════════════');
 });
