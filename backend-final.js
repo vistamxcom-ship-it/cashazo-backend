@@ -22,6 +22,7 @@ console.log('\n🚀 INICIANDO BACKEND...\n');
 // ═══════════════════════════════════════════════════════════
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const BUCKET_NAME = 'Cashazo Documento'; // NOMBRE EXACTO DEL BUCKET
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error('❌ FALTA SUPABASE_URL o SUPABASE_KEY en .env');
@@ -29,7 +30,8 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 }
 
 console.log('✅ Supabase URL:', SUPABASE_URL);
-console.log('✅ Supabase Key: ' + SUPABASE_KEY.substring(0, 20) + '...\n');
+console.log('✅ Supabase Key: ' + SUPABASE_KEY.substring(0, 20) + '...');
+console.log('✅ Bucket: ' + BUCKET_NAME + '\n');
 
 // Inicializar Supabase CON ws
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -115,9 +117,9 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
 
           console.log(`  ⬆️  ${file.fieldname}: ${file.originalname}`);
 
-          // Subir a Storage
+          // Subir a Storage - USANDO NOMBRE EXACTO DEL BUCKET
           const { error: uploadError } = await supabase.storage
-            .from('cashazo-documento')
+            .from(BUCKET_NAME)
             .upload(fileName, file.buffer, {
               contentType: file.mimetype
             });
@@ -127,7 +129,7 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
           } else {
             // Generar URL con firma
             const { data: signed } = await supabase.storage
-              .from('cashazo-documento')
+              .from(BUCKET_NAME)
               .createSignedUrl(fileName, 3600);
 
             documentos[file.fieldname] = {
