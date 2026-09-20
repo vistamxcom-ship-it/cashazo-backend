@@ -117,7 +117,7 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
 
           // Subir a Storage
           const { error: uploadError } = await supabase.storage
-            .from('Cashazo Documento')
+            .from('cashazo-documento')
             .upload(fileName, file.buffer, {
               contentType: file.mimetype
             });
@@ -127,7 +127,7 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
           } else {
             // Generar URL con firma
             const { data: signed } = await supabase.storage
-              .from('Cashazo Documento')
+              .from('cashazo-documento')
               .createSignedUrl(fileName, 3600);
 
             documentos[file.fieldname] = {
