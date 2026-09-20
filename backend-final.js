@@ -1,54 +1,52 @@
 /**
  * CASHAZO - BACKEND NOTIFICACIONES + ALMACENAMIENTO
  * Recibe solicitudes, guarda en Supabase, notifica por email
- * 
- * npm install express cors multer supabase nodemailer dotenv
- * node backend-final.js
  */
 
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
+const ws = require('ws');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-// ═══════════════════════════════════════════════════════════
-// VARIABLES DE ENTORNO (.env)
-// ═══════════════════════════════════════════════════════════
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_PASS = process.env.GMAIL_PASS;
 
-// Inicializar Supabase - desactiva Realtime para Node 20
+// Inicializar Supabase con ws explícito para Node 20
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: false }
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  },
+  global: {
+    fetch: (...args) => fetch(...args)
+  }
 });
 
-// Middleware
+// Pasar ws al cliente Realtime
+if (supabase.realtime) {
+  supabase.realtime.socket = new ws.WebSocket('ws://localhost');
+}
+
 app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// Multer para archivos
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 } // 100MB
+  limits: { fileSize: 100 * 1024 * 1024 }
 });
 
-// ═══════════════════════════════════════════════════════════
-// KEEP-ALIVE: Auto-ping para mantener el servidor despierto
-// ═══════════════════════════════════════════════════════════
 setInterval(() => {
   fetch(`http://localhost:${PORT}/health`).catch(() => {});
-}, 5 * 60 * 1000); // Cada 5 minutos
-
-// ═══════════════════════════════════════════════════════════
-// ENDPOINT PRINCIPAL
-// ═══════════════════════════════════════════════════════════
+}, 5 * 60 * 1000);
 
 app.post('/api/solicitud', upload.any(), async (req, res) => {
   try {
@@ -71,7 +69,6 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
       solicitudData = req.body;
     }
 
-    // Estructura de solicitud
     const solicitud = {
       folio: folio,
       timestamp: new Date().toISOString(),
@@ -84,7 +81,6 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
       estado: 'nueva'
     };
 
-    // Procesar y subir documentos a Supabase Storage
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         try {
@@ -92,7 +88,6 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
           
           console.log(`   ⬆️ Subiendo: ${fileName}`);
           
-          // Subir a Supabase Storage
           const { data, error } = await supabase.storage
             .from('Cashazo Documento')
             .upload(fileName, file.buffer, {
@@ -103,10 +98,9 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
             console.error(`   ❌ Error subiendo ${file.fieldname}:`, error.message);
           } else {
             console.log(`   ✅ Subido: ${file.fieldname}`);
-            // Obtener URL con firma (privada, válida 1 hora)
             const { data: signedUrl } = await supabase.storage
               .from('Cashazo Documento')
-              .createSignedUrl(fileName, 3600); // 3600 segundos = 1 hora
+              .createSignedUrl(fileName, 3600);
 
             solicitud.documentos[file.fieldname] = {
               filename: file.originalname,
@@ -122,7 +116,6 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
       }
     }
 
-    // Guardar en tabla de Supabase
     const { data, error } = await supabase
       .from('solicitudes')
       .insert([solicitud]);
@@ -151,7 +144,6 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
   }
 });
 
-// Health check (IMPORTANTE: Render lo usa para saber si está vivo)
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -160,15 +152,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════
-// INICIAR
-// ═══════════════════════════════════════════════════════════
-
 app.listen(PORT, () => {
   console.log('════════════════════════════════════════════════════════════');
   console.log(`🌐 Backend CASHAZO en http://localhost:${PORT}`);
   console.log('════════════════════════════════════════════════════════════');
-  console.log(`✅ Supabase: Conectado`);
+  console.log(`✅ Supabase: Conectado con ws`);
   console.log('════════════════════════════════════════════════════════════');
   console.log(`📝 ENDPOINT:`);
   console.log(`   POST /api/solicitud → Recibir solicitud + documentos`);
