@@ -1,15 +1,14 @@
 {
   "name": "cashazo-backend-final",
   "version": "1.0.2",
-  "description": "Backend Cashazo - Supabase + Documentos",
+  "description": "Backend Cashazo",
   "main": "backend-final.js",
   "scripts": {
     "start": "node backend-final.js",
     "dev": "nodemon backend-final.js"
   },
   "engines": {
-    "node": "20.x",
-    "npm": "10.x"
+    "node": "20.x"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
