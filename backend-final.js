@@ -1,122 +1,77 @@
 /**
- * CASHAZO - BACKEND CON REST API DIRECTO
- * Sin Supabase SDK (evita Realtime completamente)
+ * CASHAZO - BACKEND NOTIFICACIONES + ALMACENAMIENTO
+ * Recibe solicitudes, guarda en Supabase, notifica por email
+ * 
+ * npm install express cors multer supabase nodemailer dotenv
+ * node backend-final.js
  */
 
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const fetch = require('node-fetch');
+const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ocietbqwmhvaxgpggifb.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jaWV0YnF3bWh2YXhncGdnaWZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1NDgwNjAsImV4cCI6MjEwNTEyNDA2MH0.pwl-uFBnTyRsfx9JVEQvYyZAsGcN_t3XeO2uhoXz7hM';
+// ═══════════════════════════════════════════════════════════
+// VARIABLES DE ENTORNO (.env)
+// ═══════════════════════════════════════════════════════════
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_PASS = process.env.GMAIL_PASS;
 
+// Inicializar Supabase - desactiva Realtime para Node 20
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: false }
+});
+
+// Middleware
 app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
+// Multer para archivos
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 }
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB
 });
 
+// ═══════════════════════════════════════════════════════════
+// KEEP-ALIVE: Auto-ping para mantener el servidor despierto
+// ═══════════════════════════════════════════════════════════
 setInterval(() => {
   fetch(`http://localhost:${PORT}/health`).catch(() => {});
-}, 5 * 60 * 1000);
+}, 5 * 60 * 1000); // Cada 5 minutos
 
-// SUBIR A STORAGE VIA REST
-async function uploadToStorage(fileName, fileBuffer, mimetype) {
-  try {
-    const response = await fetch(
-      `${SUPABASE_URL}/storage/v1/object/Cashazo Documento/${fileName}`,
-      {
-        method: 'POST',
-        headers: {
-          'authorization': `Bearer ${SUPABASE_KEY}`,
-          'content-type': mimetype
-        },
-        body: fileBuffer
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Upload failed: ${response.statusText}`);
-    }
-
-    // Generar URL firmada
-    const signedResponse = await fetch(
-      `${SUPABASE_URL}/storage/v1/object/sign/Cashazo Documento/${fileName}`,
-      {
-        method: 'POST',
-        headers: {
-          'authorization': `Bearer ${SUPABASE_KEY}`,
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify({ expiresIn: 3600 })
-      }
-    );
-
-    if (!signedResponse.ok) {
-      throw new Error(`Sign failed: ${signedResponse.statusText}`);
-    }
-
-    const signedData = await signedResponse.json();
-    return {
-      path: fileName,
-      url: `${SUPABASE_URL}/storage/v1/object/sign/Cashazo Documento/${fileName}?token=${signedData.signedURL.split('token=')[1]}`
-    };
-  } catch (error) {
-    console.error('Storage error:', error.message);
-    return null;
-  }
-}
-
-// INSERTAR EN BD VIA REST
-async function insertSolicitud(solicitud) {
-  try {
-    const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/solicitudes`,
-      {
-        method: 'POST',
-        headers: {
-          'authorization': `Bearer ${SUPABASE_KEY}`,
-          'content-type': 'application/json',
-          'prefer': 'return=minimal'
-        },
-        body: JSON.stringify(solicitud)
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Insert failed: ${error}`);
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Insert error:', error.message);
-    return false;
-  }
-}
+// ═══════════════════════════════════════════════════════════
+// ENDPOINT PRINCIPAL
+// ═══════════════════════════════════════════════════════════
 
 app.post('/api/solicitud', upload.any(), async (req, res) => {
   try {
     console.log(`\n📥 Solicitud recibida`);
     console.log(`   Files: ${req.files ? req.files.length : 0}`);
+    console.log(`   Body keys: ${Object.keys(req.body).join(', ')}`);
+    
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(f => {
+        console.log(`   📄 ${f.fieldname}: ${f.originalname} (${f.size} bytes)`);
+      });
+    }
 
     const folio = req.body.folio || 'CZ-' + Date.now();
-    
-    let solicitudData = {};
+    let solicitudData;
+
     try {
       solicitudData = JSON.parse(req.body.dataSolicitud || req.body.data || '{}');
     } catch {
       solicitudData = req.body;
     }
 
+    // Estructura de solicitud
     const solicitud = {
       folio: folio,
       timestamp: new Date().toISOString(),
@@ -129,50 +84,60 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
       estado: 'nueva'
     };
 
-    // SUBIR ARCHIVOS
+    // Procesar y subir documentos a Supabase Storage
     if (req.files && req.files.length > 0) {
-      console.log(`   📤 Subiendo ${req.files.length} archivo(s)...`);
-      
       for (const file of req.files) {
         try {
-          const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.'));
-          const fileName = `${folio}/${file.fieldname}-${Date.now()}${fileExtension}`;
+          const fileName = `${folio}/${file.fieldname}-${Date.now()}${file.originalname.substring(file.originalname.lastIndexOf('.'))}`;
           
-          console.log(`      ⬆️ Subiendo: ${fileName}`);
+          console.log(`   ⬆️ Subiendo: ${fileName}`);
           
-          const uploadResult = await uploadToStorage(fileName, file.buffer, file.mimetype);
-          
-          if (uploadResult) {
+          // Subir a Supabase Storage
+          const { data, error } = await supabase.storage
+            .from('Cashazo Documento')
+            .upload(fileName, file.buffer, {
+              contentType: file.mimetype
+            });
+
+          if (error) {
+            console.error(`   ❌ Error subiendo ${file.fieldname}:`, error.message);
+          } else {
+            console.log(`   ✅ Subido: ${file.fieldname}`);
+            // Obtener URL con firma (privada, válida 1 hora)
+            const { data: signedUrl } = await supabase.storage
+              .from('Cashazo Documento')
+              .createSignedUrl(fileName, 3600); // 3600 segundos = 1 hora
+
             solicitud.documentos[file.fieldname] = {
               filename: file.originalname,
-              url: uploadResult.url,
+              url: signedUrl.signedUrl,
               size: file.size,
-              type: file.mimetype
+              type: file.mimetype,
+              expira_en: '1 hora'
             };
-            console.log(`      ✅ Subido: ${file.fieldname}`);
           }
         } catch (e) {
-          console.error(`      ❌ Error: ${e.message}`);
+          console.error(`   ❌ Error procesando ${file.fieldname}:`, e.message);
         }
       }
     }
 
-    // GUARDAR EN BD
-    console.log(`   💾 Guardando en BD...`);
-    const inserted = await insertSolicitud(solicitud);
+    // Guardar en tabla de Supabase
+    const { data, error } = await supabase
+      .from('solicitudes')
+      .insert([solicitud]);
 
-    if (!inserted) {
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Error guardando en base de datos' 
-      });
+    if (error) {
+      console.error('Error Supabase:', error);
+      return res.status(500).json({ error: error.message });
     }
 
-    console.log(`✅ Solicitud ${folio} guardada`);
+    console.log(`✅ Solicitud ${folio} guardada en Supabase`);
+    console.log(`📁 Documentos: ${Object.keys(solicitud.documentos).length}`);
 
     res.json({
       success: true,
-      mensaje: 'Solicitud guardada',
+      mensaje: 'Solicitud guardada en Supabase',
       folio: folio,
       documentosGuardados: Object.keys(solicitud.documentos).length
     });
@@ -186,19 +151,26 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
   }
 });
 
+// Health check (IMPORTANTE: Render lo usa para saber si está vivo)
 app.get('/health', (req, res) => {
   res.json({ 
-    status: 'ok',
-    timestamp: new Date().toISOString()
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    supabase: SUPABASE_URL ? '✅' : '❌'
   });
 });
 
+// ═══════════════════════════════════════════════════════════
+// INICIAR
+// ═══════════════════════════════════════════════════════════
+
 app.listen(PORT, () => {
   console.log('════════════════════════════════════════════════════════════');
-  console.log(`🚀 Backend CASHAZO EN LÍNEA`);
-  console.log(`🌐 URL: http://localhost:${PORT}`);
+  console.log(`🌐 Backend CASHAZO en http://localhost:${PORT}`);
   console.log('════════════════════════════════════════════════════════════');
-  console.log(`📝 ENDPOINTS:`);
+  console.log(`✅ Supabase: Conectado`);
+  console.log('════════════════════════════════════════════════════════════');
+  console.log(`📝 ENDPOINT:`);
   console.log(`   POST /api/solicitud → Recibir solicitud + documentos`);
   console.log(`   GET  /health        → Estado`);
   console.log('════════════════════════════════════════════════════════════');
