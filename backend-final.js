@@ -1,15 +1,15 @@
 /**
- * CASHAZO - BACKEND SIMPLE
- * Netlfiy (frontend) → Render (backend) → Supabase (datos)
+ * CASHAZO - BACKEND FINAL
+ * Netlify (frontend) → Render (backend) → Supabase (datos)
  * 
- * npm install express cors multer @supabase/supabase-js dotenv
- * node backend-final.js
+ * FIX: ws package incluido + RLS deshabilitado
  */
 
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
+const WebSocket = require('ws');
 require('dotenv').config();
 
 const app = express();
@@ -31,38 +31,40 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 console.log('✅ Supabase URL:', SUPABASE_URL);
 console.log('✅ Supabase Key: ' + SUPABASE_KEY.substring(0, 20) + '...\n');
 
-// Inicializar Supabase
+// Inicializar Supabase CON ws
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: false }
+  auth: { persistSession: false },
+  realtime: {
+    transport: 'websocket',
+  }
 });
 
 // ═══════════════════════════════════════════════════════════
-// MIDDLEWARE - SUPER IMPORTANTE
+// MIDDLEWARE
 // ═══════════════════════════════════════════════════════════
 
-// CORS PRIMERO (antes de cualquier otra cosa)
+// CORS (PRIMERO)
 app.use(cors({
-  origin: '*', // Permite todos los origenes
+  origin: '*',
   methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
   headers: ['Content-Type', 'Authorization'],
   credentials: false
 }));
 
-// OPTIONS para preflight requests
 app.options('*', cors());
 
 // Body parsers
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// Multer para archivos
+// Multer
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 } // 100MB
+  limits: { fileSize: 100 * 1024 * 1024 }
 });
 
 // ═══════════════════════════════════════════════════════════
-// HEALTH CHECK - Básico
+// HEALTH CHECK
 // ═══════════════════════════════════════════════════════════
 app.get('/health', (req, res) => {
   res.json({
@@ -74,7 +76,7 @@ app.get('/health', (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// ENDPOINT PRINCIPAL - RECIBIR SOLICITUD
+// ENDPOINT PRINCIPAL
 // ═══════════════════════════════════════════════════════════
 
 app.post('/api/solicitud', upload.any(), async (req, res) => {
@@ -123,7 +125,7 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
           if (uploadError) {
             console.log(`  ❌ Error: ${uploadError.message}`);
           } else {
-            // Generar URL con firma (válida 1 hora)
+            // Generar URL con firma
             const { data: signed } = await supabase.storage
               .from('Cashazo Documento')
               .createSignedUrl(fileName, 3600);
@@ -168,10 +170,14 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
 
     if (insertError) {
       console.log(`❌ Error Supabase: ${insertError.message}`);
+      console.log(`   Code: ${insertError.code}`);
+      console.log(`   Details: ${insertError.details}`);
+      
       return res.status(500).json({
         success: false,
         error: `Error guardando en BD: ${insertError.message}`,
-        folio: folio
+        folio: folio,
+        code: insertError.code
       });
     }
 
@@ -179,9 +185,7 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
     console.log(`✅ Documentos: ${Object.keys(documentos).length}`);
     console.log('='.repeat(60) + '\n');
 
-    // ═══════════════════════════════════════════════════════════
     // RESPUESTA EXITOSA
-    // ═══════════════════════════════════════════════════════════
     res.json({
       success: true,
       mensaje: '✅ Solicitud guardada en Supabase',
@@ -203,7 +207,7 @@ app.post('/api/solicitud', upload.any(), async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// ENDPOINT PARA OBTENER SOLICITUD (opcional)
+// OBTENER SOLICITUD
 // ═══════════════════════════════════════════════════════════
 app.get('/api/solicitudes/:folio', async (req, res) => {
   try {
@@ -226,7 +230,7 @@ app.get('/api/solicitudes/:folio', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// MANEJO DE ERRORES
+// ERROR HANDLING
 // ═══════════════════════════════════════════════════════════
 app.use((err, req, res, next) => {
   console.error('Error no manejado:', err);
